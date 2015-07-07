@@ -103,8 +103,10 @@ function clicked(d) {
   active = d3.select(this).classed("active", true);
 
   var bounds = path.bounds(d),
-      dx = bounds[1][0] - bounds[0][0],
-      dy = bounds[1][1] - bounds[0][1],
+      //TODO fix dumb hack to handle points that don't have a proper bounding box
+      dx = bounds[1][0] - bounds[0][0] > 0 ? bounds[1][0] - bounds[0][0] : 20 ,
+      dy = bounds[1][1] - bounds[0][1] > 0 ? bounds[1][1] - bounds[0][1] : 20 ,
+
       x = (bounds[0][0] + bounds[1][0]) / 2,
       y = (bounds[0][1] + bounds[1][1]) / 2,
       scale = .9 / Math.max(dx / width, dy / height),
