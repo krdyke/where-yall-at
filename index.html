@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
 <style>
 
 .background {
@@ -14,7 +16,9 @@
 
 .orgs {
     fill: red;
+    opacity:0.3;
     cursor:pointer;
+
 }
 .feature.active {
   fill: orange;
@@ -29,6 +33,13 @@
 
 </style>
 <body>
+    <div id="main"></div>
+    <div class="col-xs-12 col-md-6" id="text-box">
+        <h2 class="name"></h2>
+        <p class="work-focus"></p>
+        <p><a class="url"></a></p>
+    </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
 <script>
@@ -44,15 +55,24 @@ var projection = d3.geo.albersUsa()
 var zoom = d3.behavior.zoom()
     .translate([0, 0])
     .scale(1)
-    .scaleExtent([1, 30])
+    .scaleExtent([1, 35])
     .on("zoom", zoomed);
 
-var path = d3.geo.path()
-    .projection(projection);
+//inverse log scale for scaling down point radius
+//as zoomed in
+var logScale = d3.scale.log()
+    .domain([1,35])
+    .range([10,0.5]);
 
-var svg = d3.select("body").append("svg")
+var path = d3.geo.path()
+    .projection(projection)
+    .pointRadius(10);
+
+var svg = d3.select("#main").append("svg")
     .attr("width", width)
     .attr("height", height)
+    .attr("viewBox", "0 0 " + width + " " + height)
+    .attr("preserveAspectRatio", "xMidYMid")
     .on("click", stopped, true);
 
 svg.append("rect")
@@ -62,6 +82,7 @@ svg.append("rect")
     .on("click", reset);
 
 var g = svg.append("g");
+var orgs = svg.append("g");
 
 svg
     .call(zoom) // delete this line to disable free zooming
@@ -72,10 +93,10 @@ d3.json("us.json", function(error, us) {
 
   g.selectAll("path")
       .data(topojson.feature(us, us.objects.states).features)
-    .enter().append("path")
+      .enter().append("path")
       .attr("d", path)
-      .attr("class", "feature")
-      .on("click", clicked);
+      .attr("class", "feature");
+     // .on("click", clicked);
 
   g.append("path")
       .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
@@ -86,16 +107,33 @@ d3.json("us.json", function(error, us) {
         function(error, data){
             if (error) throw error;
 
-            g.append("g").selectAll("path")
+            orgs.selectAll("path")
                 .data(data.features)
                 .enter().append("path")
                 .attr("d", path)
                 .attr("class", "orgs")
-                .on("click", clicked);
-
-
+                .on("click", clicked_point);
         });
 });
+
+function reset_info(){
+    d3.select(".name").text("");
+    d3.select(".work-focus").html("");
+    d3.select(".url").text("");
+}
+
+function clicked_point(d) {
+    reset_info();
+    d3.select(".name").text(d.properties.name);
+    var work_focus = d.properties.work_focus.replace(/\n/g,"<br/>");
+    d3.select(".work-focus").html(work_focus);
+
+    if (d.properties.url.indexOf("http") !== -1){
+        d3.select(".url")
+            .attr("href", d.properties.url)
+            .text(d.properties.url);
+    }
+}
 
 function clicked(d) {
   if (active.node() === this) return reset();
@@ -103,9 +141,8 @@ function clicked(d) {
   active = d3.select(this).classed("active", true);
 
   var bounds = path.bounds(d),
-      //TODO fix dumb hack to handle points that don't have a proper bounding box
-      dx = bounds[1][0] - bounds[0][0] > 0 ? bounds[1][0] - bounds[0][0] : 20 ,
-      dy = bounds[1][1] - bounds[0][1] > 0 ? bounds[1][1] - bounds[0][1] : 20 ,
+      dx = bounds[1][0] - bounds[0][0],
+      dy = bounds[1][1] - bounds[0][1],
 
       x = (bounds[0][0] + bounds[1][0]) / 2,
       y = (bounds[0][1] + bounds[1][1]) / 2,
@@ -129,6 +166,9 @@ function reset() {
 function zoomed() {
   g.style("stroke-width", 1.5 / d3.event.scale + "px");
   g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  orgs.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  path.pointRadius(logScale(d3.event.scale));
+  orgs.selectAll("path").attr("d", path);
 }
 
 // If the drag behavior prevents the default click,
