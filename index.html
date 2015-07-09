@@ -77,6 +77,13 @@ position: absolute;
 
     <script>
 
+    function resize(){
+        svg
+        .attr("width", $("#main").width())
+        .attr("height", $("#main").height());
+    }
+    $(window).on("resize", resize);
+
     var width = $("#main").width(),
     height = $("#main").height(),
     active = d3.select(null);
