@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
 <style>
 
 .background {
@@ -37,15 +37,32 @@
 </style>
 <body>
     <div id="main"></div>
-    <div class="col-xs-12 col-md-6" id="text-box">
-        <h2 class="name"></h2>
-        <p class="work-focus"></p>
-        <p><a class="url"></a></p>
-    </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="org-name"></h4>
+            </div>
+            <div class="modal-body">
+                <p class="work-focus"></p>
+                <p><a class="url"></a></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/bower_components/d3/d3.min.js"></script>
+<script src="/bower_components/topojson/topojson.js"></script>
+<script src="/bower_components/jquery/dist/jquery.min.js"></script>
+<script src="/bower_components/bootstrap/js/modal.js"></script>
+
 <script>
+
 
 var width = 960,
     height = 500,
@@ -161,14 +178,14 @@ d3.json("us.json", function(error, us) {
 });
 
 function reset_info(){
-    d3.select(".name").text("");
+    d3.select("#org-name").text("");
     d3.select(".work-focus").html("");
     d3.select(".url").text("");
 }
 
 function clicked_point(d) {
     reset_info();
-    d3.select(".name").text(d.properties.name);
+    d3.select("#org-name").text(d.properties.name);
     var work_focus = d.properties.work_focus.replace(/\n/g,"<br/>");
     d3.select(".work-focus").html(work_focus);
 
@@ -177,6 +194,7 @@ function clicked_point(d) {
             .attr("href", d.properties.url)
             .text(d.properties.url);
     }
+    $(".modal").modal();
 }
 
 function clicked(d) {
