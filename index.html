@@ -34,6 +34,12 @@
     stroke-linejoin: round;
 }
 
+#main {
+width: 100%;
+height: 100%;
+position: absolute;
+}
+
 </style>
 <body>
     <div id="main"></div>
@@ -71,8 +77,8 @@
 
     <script>
 
-    var width = 960,
-    height = 500,
+    var width = $("#main").width(),
+    height = $("#main").height(),
     active = d3.select(null);
 
     var projection = d3.geo.albersUsa()
