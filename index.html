@@ -12,7 +12,9 @@
 
 .feature {
   fill: #ccc;
-  cursor: pointer;
+}
+.orgs:hover {
+    fill: orange;
 }
 
 .orgs {
@@ -49,6 +51,8 @@ var width = 960,
     height = 500,
     active = d3.select(null);
 
+
+
 var projection = d3.geo.albersUsa()
     .scale(1000)
     .translate([width / 2, height / 2]);
@@ -64,6 +68,10 @@ var zoom = d3.behavior.zoom()
 var logScale = d3.scale.log()
     .domain([1,35])
     .range([10,0.5]);
+
+var lineScale = d3.scale.log()
+    .domain([1,35])
+    .range([4,0.05]);
 
 var path = d3.geo.path()
     .projection(projection)
@@ -82,8 +90,14 @@ svg.append("rect")
     .attr("height", height)
     .on("click", reset);
 
+    var voronoi = d3.geom.voronoi()
+        .x(function(d) {  return projection(d.geometry.coordinates)[0]; })
+        .y(function(d) {  return projection(d.geometry.coordinates)[1];})
+        .clipExtent([[0, 0], [width, height]]);
+
 var g = svg.append("g");
 var orgs = svg.append("g");
+var vor = svg.append("g");
 
 svg
     .call(zoom) // delete this line to disable free zooming
@@ -114,6 +128,35 @@ d3.json("us.json", function(error, us) {
                 .attr("d", path)
                 .attr("class", "orgs")
                 .on("click", clicked_point);
+
+
+            vor.selectAll("path")
+                .data(voronoi.links(data.features))
+                .enter().append("path")
+                .attr("d", function(d){
+                    var qualifier = "Tran* rights";
+                    var a = d3.set(d.source.properties.passion.split(", "));
+                    var b = d3.set(d.target.properties.passion.split(", "));
+                    if (a.has(qualifier) && b.has(qualifier)){
+                        var line = {
+                            "type":"Feature",
+                            "geometry":{
+                                "type":"LineString",
+                                "coordinates":[
+                                    d.source.geometry.coordinates,
+                                    d.target.geometry.coordinates
+                                ]
+                            }
+                        };
+                         return path(line)
+                    }
+                })
+                //.attr("d",path)
+                //.attr("d", function(d) {return "M" + d.join("L") + "Z"; })
+                .style("fill", "none")
+                .style("stroke","steelblue");
+
+
         });
 });
 
@@ -168,6 +211,8 @@ function zoomed() {
   g.style("stroke-width", 1.5 / d3.event.scale + "px");
   g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
   orgs.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  vor.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  vor.style("stroke-width", function(d){return lineScale(d3.event.scale)});
   path.pointRadius(logScale(d3.event.scale));
   orgs.selectAll("path").attr("d", path);
 }
