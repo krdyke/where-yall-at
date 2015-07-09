@@ -134,7 +134,7 @@ d3.json("us.json", function(error, us) {
                 .data(voronoi.links(data.features))
                 .enter().append("path")
                 .attr("d", function(d){
-                    var qualifier = "Tran* rights";
+                    var qualifier = "school-to-prison pipeline/nexus";
                     var a = d3.set(d.source.properties.passion.split(", "));
                     var b = d3.set(d.target.properties.passion.split(", "));
                     if (a.has(qualifier) && b.has(qualifier)){
