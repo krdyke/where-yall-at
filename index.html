@@ -6,12 +6,12 @@
 <style>
 
 .background {
-  fill: none;
-  pointer-events: all;
+    fill: none;
+    pointer-events: all;
 }
 
 .feature {
-  fill: #ccc;
+    fill: #ccc;
 }
 .orgs:hover {
     fill: orange;
@@ -24,118 +24,126 @@
 
 }
 .feature.active {
-  fill: orange;
+    fill: orange;
 }
 
 .mesh {
-  fill: none;
-  stroke: #fff;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+    fill: none;
+    stroke: #fff;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 </style>
 <body>
     <div id="main"></div>
 
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="org-name"></h4>
-            </div>
-            <div class="modal-body">
-                <p class="work-focus"></p>
-                <p><a class="url"></a></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="org-name"></h4>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-xs-12">
+                                 <p class="work-focus"></p>
+                                 <p><a class="url"></a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="bower_components/d3/d3.min.js"></script>
-<script src="bower_components/topojson/topojson.js"></script>
-<script src="bower_components/jquery/dist/jquery.min.js"></script>
-<script src="bower_components/bootstrap/js/modal.js"></script>
+    <script src="bower_components/d3/d3.min.js"></script>
+    <script src="bower_components/topojson/topojson.js"></script>
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/bootstrap/js/modal.js"></script>
 
-<script>
+    <script>
 
-
-var width = 960,
+    var width = 960,
     height = 500,
     active = d3.select(null);
 
+    var projection = d3.geo.albersUsa()
+        .scale(1000)
+        .translate([width / 2, height / 2]);
 
+    var zoom = d3.behavior.zoom()
+        .translate([0, 0])
+        .scale(1)
+        .scaleExtent([1, 35])
+        .on("zoom", zoomed);
 
-var projection = d3.geo.albersUsa()
-    .scale(1000)
-    .translate([width / 2, height / 2]);
+    //inverse log scale for scaling down point radius
+    //as zoomed in
+    var logScale = d3.scale.log()
+        .domain([1,35])
+        .range([10,0.5]);
 
-var zoom = d3.behavior.zoom()
-    .translate([0, 0])
-    .scale(1)
-    .scaleExtent([1, 35])
-    .on("zoom", zoomed);
+    var lineScale = d3.scale.log()
+        .domain([1,35])
+        .range([4,0.05]);
 
-//inverse log scale for scaling down point radius
-//as zoomed in
-var logScale = d3.scale.log()
-    .domain([1,35])
-    .range([10,0.5]);
+    var path = d3.geo.path()
+        .projection(projection)
+        .pointRadius(10);
 
-var lineScale = d3.scale.log()
-    .domain([1,35])
-    .range([4,0.05]);
+    var svg = d3.select("#main").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", "0 0 " + width + " " + height)
+        .attr("preserveAspectRatio", "xMidYMid")
+        .on("click", stopped, true);
 
-var path = d3.geo.path()
-    .projection(projection)
-    .pointRadius(10);
-
-var svg = d3.select("#main").append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .attr("viewBox", "0 0 " + width + " " + height)
-    .attr("preserveAspectRatio", "xMidYMid")
-    .on("click", stopped, true);
-
-svg.append("rect")
-    .attr("class", "background")
-    .attr("width", width)
-    .attr("height", height)
-    .on("click", reset);
+    svg.append("rect")
+        .attr("class", "background")
+        .attr("width", width)
+        .attr("height", height)
+        .on("click", reset);
 
     var voronoi = d3.geom.voronoi()
-        .x(function(d) {  return projection(d.geometry.coordinates)[0]; })
-        .y(function(d) {  return projection(d.geometry.coordinates)[1];})
-        .clipExtent([[0, 0], [width, height]]);
+    .x(function(d) {  return projection(d.geometry.coordinates)[0]; })
+    .y(function(d) {  return projection(d.geometry.coordinates)[1];})
+    .clipExtent([[0, 0], [width, height]]);
 
-var g = svg.append("g");
-var orgs = svg.append("g");
-var vor = svg.append("g");
+    var g = svg.append("g");
+    var orgs = svg.append("g");
+    var vor = svg.append("g");
 
-svg
+    svg
     .call(zoom) // delete this line to disable free zooming
     .call(zoom.event);
 
-d3.json("us.json", function(error, us) {
-  if (error) throw error;
+    d3.json("us.json", function(error, us) {
+        if (error) throw error;
 
-  g.selectAll("path")
-      .data(topojson.feature(us, us.objects.states).features)
-      .enter().append("path")
-      .attr("d", path)
-      .attr("class", "feature");
-     // .on("click", clicked);
+        g.selectAll("path")
+            .data(topojson.feature(us, us.objects.states).features)
+            .enter().append("path")
+            .attr("d", path)
+            .attr("class", "feature");
+            // .on("click", clicked);
 
-  g.append("path")
-      .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
-      .attr("class", "mesh")
-      .attr("d", path);
+        g.append("path")
+            .datum(topojson.mesh(us, us.objects.states, function(a, b) {
+                return a !== b;
+            }))
+            .attr("class", "mesh")
+            .attr("d", path);
 
-      d3.json("//krdyke.cartodb.com/api/v2/sql?q=SELECT%20*%20FROM%20public.where_yall_at_v1&format=geojson",
+        d3.json("//krdyke.cartodb.com/api/v2/sql?" +
+        "q=SELECT%20*%20FROM%20public.where_yall_at_v1&format=geojson",
         function(error, data){
             if (error) throw error;
 
@@ -165,80 +173,87 @@ d3.json("us.json", function(error, us) {
                                 ]
                             }
                         };
-                         return path(line)
+                        return path(line)
                     }
                 })
-                //.attr("d",path)
-                //.attr("d", function(d) {return "M" + d.join("L") + "Z"; })
                 .style("fill", "none")
                 .style("stroke","steelblue");
-
-
         });
-});
+    });
 
-function reset_info(){
-    d3.select("#org-name").text("");
-    d3.select(".work-focus").html("");
-    d3.select(".url").text("");
-}
+    function reset_info(){
+        d3.select("#org-name").text("");
+        d3.select(".work-focus").html("");
+        d3.select(".url").text("");
+    }
 
-function clicked_point(d) {
-    reset_info();
-    d3.select("#org-name").text(d.properties.name);
-    var work_focus = d.properties.work_focus.replace(/\n/g,"<br/>");
-    d3.select(".work-focus").html(work_focus);
+    function clicked_point(d) {
+        reset_info();
+        d3.select("#org-name").text(d.properties.name);
+        var work_focus = d.properties.work_focus.replace(/\n/g,"<br/>");
+        d3.select(".work-focus").html(work_focus);
 
-    if (d.properties.url.indexOf("http") !== -1){
-        d3.select(".url")
+        if (d.properties.url.indexOf("http") !== -1){
+            d3.select(".url")
             .attr("href", d.properties.url)
             .text(d.properties.url);
+        }
+
+        $(".modal").modal();
     }
-    $(".modal").modal();
-}
 
-function clicked(d) {
-  if (active.node() === this) return reset();
-  active.classed("active", false);
-  active = d3.select(this).classed("active", true);
+    function clicked(d) {
+        if (active.node() === this) return reset();
+        active.classed("active", false);
+        active = d3.select(this).classed("active", true);
 
-  var bounds = path.bounds(d),
-      dx = bounds[1][0] - bounds[0][0],
-      dy = bounds[1][1] - bounds[0][1],
+        var bounds = path.bounds(d),
+        dx = bounds[1][0] - bounds[0][0],
+        dy = bounds[1][1] - bounds[0][1],
 
-      x = (bounds[0][0] + bounds[1][0]) / 2,
-      y = (bounds[0][1] + bounds[1][1]) / 2,
-      scale = .9 / Math.max(dx / width, dy / height),
-      translate = [width / 2 - scale * x, height / 2 - scale * y];
+        x = (bounds[0][0] + bounds[1][0]) / 2,
+        y = (bounds[0][1] + bounds[1][1]) / 2,
+        scale = .9 / Math.max(dx / width, dy / height),
+        translate = [width / 2 - scale * x, height / 2 - scale * y];
 
-  svg.transition()
-      .duration(750)
-      .call(zoom.translate(translate).scale(scale).event);
-}
+        svg.transition()
+            .duration(750)
+            .call(zoom.translate(translate).scale(scale).event);
+    }
 
-function reset() {
-  active.classed("active", false);
-  active = d3.select(null);
+    function reset() {
+        active.classed("active", false);
+        active = d3.select(null);
 
-  svg.transition()
-      .duration(750)
-      .call(zoom.translate([0, 0]).scale(1).event);
-}
+        svg.transition()
+            .duration(750)
+            .call(zoom.translate([0, 0]).scale(1).event);
+    }
 
-function zoomed() {
-  g.style("stroke-width", 1.5 / d3.event.scale + "px");
-  g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-  orgs.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-  vor.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-  vor.style("stroke-width", function(d){return lineScale(d3.event.scale)});
-  path.pointRadius(logScale(d3.event.scale));
-  orgs.selectAll("path").attr("d", path);
-}
+    function zoomed() {
+        g.style("stroke-width", 1.5 / d3.event.scale + "px");
 
-// If the drag behavior prevents the default click,
-// also stop propagation so we don’t click-to-zoom.
-function stopped() {
-  if (d3.event.defaultPrevented) d3.event.stopPropagation();
-}
+        // transform the various map layers in response to zoom/pan
+        g.attr("transform", "translate(" + d3.event.translate +
+            ")scale(" + d3.event.scale + ")");
+        orgs.attr("transform", "translate(" + d3.event.translate +
+            ")scale(" + d3.event.scale + ")");
+        vor.attr("transform", "translate(" + d3.event.translate +
+            ")scale(" + d3.event.scale + ")");
 
-</script>
+        // scale lines and points in size
+        vor.style("stroke-width", function(d){
+            return lineScale(d3.event.scale)
+        });
+        path.pointRadius(logScale(d3.event.scale));
+
+        orgs.selectAll("path").attr("d", path);
+    }
+
+    // If the drag behavior prevents the default click,
+    // also stop propagation so we don’t click-to-zoom.
+    function stopped() {
+        if (d3.event.defaultPrevented) d3.event.stopPropagation();
+    }
+
+    </script>
