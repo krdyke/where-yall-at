@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
 <style>
 
 .background {
@@ -56,10 +56,10 @@
     </div>
 </div>
 
-<script src="/bower_components/d3/d3.min.js"></script>
-<script src="/bower_components/topojson/topojson.js"></script>
-<script src="/bower_components/jquery/dist/jquery.min.js"></script>
-<script src="/bower_components/bootstrap/js/modal.js"></script>
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/topojson/topojson.js"></script>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/bootstrap/js/modal.js"></script>
 
 <script>
 
@@ -84,7 +84,7 @@ var zoom = d3.behavior.zoom()
 //as zoomed in
 var logScale = d3.scale.log()
     .domain([1,35])
-    .range([10,0.5]);
+    .range([1,0.5]);
 
 var lineScale = d3.scale.log()
     .domain([1,35])
